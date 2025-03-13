@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
+const { createToken } = require('../services/authentication');
+
 
 // Signup Route (GET)
 router.get('/signup', (req, res) => {
@@ -32,7 +34,8 @@ router.post('/signup', async (req, res) => {
 
 // Signin Route (GET)
 router.get('/signin', (req, res) => {
-  res.render('signin', { title: 'Sign In' });
+  const error = req.query.error || null; // Get error from query params
+  res.render('signin', { title: 'Sign In', error });
 });
 
 // Signin Route (POST)
@@ -43,17 +46,17 @@ router.post('/signin', async (req, res) => {
     // Find the user by email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).render('signin', { error: 'Invalid email or password' });
+      return res.redirect('/user/signin?error=Invalid email or password');  
     }
 
     // Compare the password
     const isMatch = await user.comparePassword(password); // Only pass the password
     if (!isMatch) {
-      return res.status(400).render('signin', { error: 'Invalid email or password' });
+      return res.redirect('/user/signin?error=Invalid email or password');
     }
 
     // Generate a token (assuming you have a method for this)
-    const token = user.createToken(); // Example method to generate a token
+    const token = createToken(user); // Example method to generate a token
 
     console.log('Token:', token);
 
