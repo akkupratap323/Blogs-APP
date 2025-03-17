@@ -22,12 +22,28 @@
           <li class="nav-item">
             <a class="nav-link" href="/">Home</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/user/signup">Sign Up</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/user/signin">Sign In</a>
-          </li>
+          {{#if user}}
+            <!-- Show these options only if the user is logged in -->
+            <li class="nav-item">
+              <a class="nav-link" href="/blog/create">Create Blog</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                {{user.username}} <!-- Display the username -->
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li><a class="dropdown-item" href="/user/logout">Logout</a></li>
+              </ul>
+            </li>
+          {{else}}
+            <!-- Show these options only if the user is not logged in -->
+            <li class="nav-item">
+              <a class="nav-link" href="/user/signup">Sign Up</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/user/signin">Sign In</a>
+            </li>
+          {{/if}}
         </ul>
       </div>
     </div>
@@ -58,6 +74,11 @@
   <!-- Footer -->
   <footer class="bg-dark text-white text-center py-3">
     <p>&copy; 2023 Blogging App. All rights reserved.</p>
+    {{#if user}}
+      <p>Welcome back, {{user.username}}!</p>
+    {{else}}
+      <p>Please <a href="/user/signin" class="text-white">sign in</a> to create blogs.</p>
+    {{/if}}
   </footer>
 
   <!-- Bootstrap JS -->
@@ -65,17 +86,17 @@
 
   <!-- JavaScript to Show Toast on Error -->
   <script>
-  // Check if there's an error in the template locals
-  const error = "{{error}}"; // Assuming you pass `error` from the server
-  console.log("Error:", error); // Debugging: Check if error is being passed correctly
+    // Check if there's an error in the template locals
+    const error = "{{error}}"; // Assuming you pass `error` from the server
+    console.log("Error:", error); // Debugging: Check if error is being passed correctly
 
-  if (error) {
-    console.log("Error detected. Showing toast..."); // Debugging: Check if this block is executed
-    // Initialize the toast
-    const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
-    // Show the toast
-    errorToast.show();
-  }
-</script>
+    if (error) {
+      console.log("Error detected. Showing toast..."); // Debugging: Check if this block is executed
+      // Initialize the toast
+      const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+      // Show the toast
+      errorToast.show();
+    }
+  </script>
 </body>
 </html>

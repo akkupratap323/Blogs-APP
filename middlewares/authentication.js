@@ -6,7 +6,7 @@ function authenticationCookie(cookieName) {
 
         // If token is missing, send 401 and stop execution
         if (!tokenval) {
-            return res.status(401).send("Unauthorized");
+            return next();
         }
 
         try {
@@ -22,7 +22,7 @@ function authenticationCookie(cookieName) {
             req.user = userpayload;
 
             // Call next() to proceed to the next middleware/route handler
-            next();
+            return next();
         } catch (err) {
             // Log the error and pass it to the error-handling middleware
             console.log(err);
