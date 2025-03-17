@@ -22,7 +22,7 @@ app.use(express.json()); // To parse JSON bodies
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
-// app.use(authenticationCookie('token'));
+app.use(authenticationCookie('token'));
 
 // Connect to MongoDB
 // MongoDB Connection
@@ -34,8 +34,15 @@ mongoose.connect('mongodb://localhost:27017/blog')
 
 
 // Route to render the index.hbs file
+
 app.get('/', (req, res) => {
-  res.render('index', { title: 'Blogging App', message: 'Welcome to Blogging App' });
+  res.render('index', {
+    
+    user: req.user,
+    title: 'Blogging App',
+    message: 'Welcome to Blogging App',
+  });
+  console.log(req.user);
 });
 
 app.use('/user', userRoute)
