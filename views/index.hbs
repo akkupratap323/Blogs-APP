@@ -1,0 +1,33 @@
+<div class="container my-5">
+  <div class="text-center mb-5">
+    <h1 class="display-4" style="font-weight: 600; color: #343a40;">Welcome to the Blogging App</h1>
+    <p class="lead" style="color: #6c757d;">This is the home page. Explore the latest blogs or create your own!</p>
+  </div>
+
+  {{#if blogs}}
+    <div class="row">
+      {{#each blogs}}
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card h-100 shadow-sm" style="border: none; border-radius: 12px; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+            {{#if this.image}}
+              <img src="{{this.image}}" class="card-img-top" alt="Blog Image" style="height: 200px; object-fit: cover;">
+            {{/if}}
+            <div class="card-body">
+              <h5 class="card-title" style="font-weight: 600; color: #343a40;">{{this.title}}</h5>
+              <p class="card-text" style="color: #6c757d;">{{this.body}}</p>
+              <p class="text-muted" style="font-size: 0.9rem;">Posted by: {{this.author.username}}</p>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+              <a href="/blog/{{this._id}}" class="btn btn-primary" style="border-radius: 8px; font-weight: 500; background-color: #007bff; border: none; transition: background-color 0.3s ease;">Read More</a>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  {{else}}
+    <div class="text-center">
+      <p class="lead" style="color: #6c757d;">No blogs found. Be the first to create one!</p>
+      <a href="/blog/create" class="btn btn-primary btn-lg" style="border-radius: 8px; font-weight: 500; background-color: #007bff; border: none; transition: background-color 0.3s ease;">Create Blog</a>
+    </div>
+  {{/if}}
+</div>

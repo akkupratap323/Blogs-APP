@@ -4,6 +4,7 @@
       <div class="card-body">
         <h2 class="card-title text-center mb-4">Sign In</h2>
         <form action="/user/signin" method="POST">
+          <input type="hidden" name="_csrf" value="{{csrfToken}}">
           <!-- Email Field -->
           <div class="mb-3">
             <label for="email" class="form-label">Email</label>

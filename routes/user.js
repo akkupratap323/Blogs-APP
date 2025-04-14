@@ -1,84 +1,113 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/user');
 const { createToken } = require('../services/authentication');
+const User = require('../models/user');
+const csrf = require('csurf');
 
+// Initialize CSRF protection
+const csrfProtection = csrf({ cookie: true });
 
-// Signup Route (GET)
-router.get('/signup', (req, res) => {
-  res.render('signup', { title: 'Sign Up' });
+// Signup routes
+router.get('/signup', csrfProtection, (req, res) => {
+  res.render('signup', {
+    title: 'Sign Up',
+    csrfToken: req.csrfToken(),
+    error: req.flash('error'),
+    formData: req.flash('formData')[0] || {}
+  });
 });
 
-// Signup Route (POST)
-router.post('/signup', async (req, res) => {
-  const { username, email, password } = req.body;
-
+router.post('/signup', csrfProtection, async (req, res) => {
   try {
-    // Check if the user already exists
-    const existingUser = await User.findOne({ email });
+    const { username, email, password, confirmPassword } = req.body;
+    
+    // Validation
+    if (!username || !email || !password || !confirmPassword) {
+      req.flash('error', 'All fields are required');
+      req.flash('formData', { username, email });
+      return res.redirect('/user/signup');
+    }
+
+    if (password !== confirmPassword) {
+      req.flash('error', 'Passwords do not match');
+      req.flash('formData', { username, email });
+      return res.redirect('/user/signup');
+    }
+
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return res.status(400).render('signup', { error: 'Email already exists' });
+      req.flash('error', 'Email or username already exists');
+      req.flash('formData', { username, email });
+      return res.redirect('/user/signup');
     }
 
-    // Create a new user
-    const newUser = new User({ username, email, password });
-    await newUser.save();
+    const user = new User({ username, email, password });
+    await user.save();
 
-    // Redirect to the login page after successful signup
-    res.redirect('/user/signin');
-  } catch (err) {
-    console.error('Error during signup:', err);
-    res.status(500).render('signup', { error: 'Internal Server Error' });
-  }
-});
-
-// Signin Route (GET)
-router.get('/signin', (req, res) => {
-  const error = req.query.error || null; // Get error from query params
-  res.render('signin', { title: 'Sign In', error });
-});
-
-// Signin Route (POST)
-router.post('/signin', async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    // Find the user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.redirect('/user/signin?error=Invalid email or password');  
-    }
-
-    // Compare the password
-    const isMatch = await user.comparePassword(password); // Only pass the password
-    if (!isMatch) {
-      return res.redirect('/user/signin?error=Invalid email or password');
-    }
-
-    // Generate a token (assuming you have a method for this)
-    const token = createToken(user); // Example method to generate a token
-
-    console.log('Token:', token);
-
-    // Set the token in a cookie and redirect
-    res.cookie('token', token, {
+    const token = createToken(user);
+    res.cookie('token', token, { 
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 3600000, // 1 hour
-    }).redirect('/');
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    req.flash('success', 'Account created successfully!');
+    res.redirect('/');
   } catch (err) {
-    console.error('Error during login:', err);
-    res.status(500).render('signin', { error: 'Internal Server Error' });
+    console.error('Signup error:', err);
+    req.flash('error', err.message);
+    res.redirect('/user/signup');
   }
 });
 
-// Logout Route
-router.get('/logout', (req, res) => {
-  // Clear the token cookie
-  res.clearCookie('token');
+// Login routes
+router.get('/signin', csrfProtection, (req, res) => {
+  res.render('signin', {
+    title: 'Sign In',
+    csrfToken: req.csrfToken(),
+    error: req.flash('error'),
+    formData: req.flash('formData')[0] || {}
+  });
+});
 
-  // Redirect to the home page
+router.post('/signin', csrfProtection, async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      req.flash('error', 'Email and password are required');
+      return res.redirect('/user/signin');
+    }
+
+    const user = await User.findOne({ email });
+    if (!user || !(await user.comparePassword(password))) {
+      req.flash('error', 'Invalid credentials');
+      req.flash('formData', { email });
+      return res.redirect('/user/signin');
+    }
+
+    const token = createToken(user);
+    res.cookie('token', token, { 
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    req.flash('success', 'Logged in successfully!');
+    res.redirect('/');
+  } catch (err) {
+    console.error('Login error:', err);
+    req.flash('error', 'Login failed');
+    res.redirect('/user/signin');
+  }
+});
+
+// Logout
+router.get('/logout', (req, res) => {
+  res.clearCookie('token');
+  req.flash('success', 'You have been logged out');
   res.redirect('/');
 });
 

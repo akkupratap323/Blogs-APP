@@ -1,26 +1,98 @@
-<!-- views/blog.hbs -->
-<div class="container my-5">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Create a New Blog</h5>
-          {{#if error}}
-            <div class="alert alert-danger">{{error}}</div>
-          {{/if}}
-          <form action="/blog/create" method="POST">
-            <div class="mb-3">
-              <label for="title" class="form-label">Title</label>
-              <input type="text" class="form-control" id="title" name="title" required>
-            </div>
-            <div class="mb-3">
-              <label for="content" class="form-label">Content</label>
-              <textarea class="form-control" id="content" name="content" rows="5" required></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Create Blog</button>
-          </form>
-        </div>
-      </div>
+{{!< main}}
+
+<div class="container mt-5">
+  <h1>Create New Blog Post</h1>
+  
+  {{#if error}}
+    <div class="alert alert-danger">{{error}}</div>
+  {{/if}}
+
+  {{#if success}}
+    <div class="alert alert-success">{{success}}</div>
+  {{/if}}
+
+  <form id="blogForm" action="/blog/create" method="POST" enctype="multipart/form-data" novalidate>
+    <input type="hidden" name="_csrf" value="{{csrfToken}}">
+    
+    <div class="mb-3">
+      <label for="title" class="form-label">Title *</label>
+      <input type="text" class="form-control" id="title" name="title" required>
+      <div class="invalid-feedback">Please provide a title</div>
     </div>
-  </div>
+    
+    <div class="mb-3">
+      <label for="body" class="form-label">Content *</label>
+      <textarea class="form-control" id="body" name="body" rows="10" required></textarea>
+      <div class="invalid-feedback">Please provide content</div>
+    </div>
+    
+    <div class="mb-3">
+      <label for="image" class="form-label">Featured Image</label>
+      <input type="file" class="form-control" id="image" name="image" accept="image/*">
+      <small class="text-muted">Max size: 5MB (JPEG, PNG, GIF)</small>
+      <div class="invalid-feedback">Please select a valid image file</div>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Create Post</button>
+    <a href="/" class="btn btn-secondary ms-2">Cancel</a>
+  </form>
 </div>
+
+<script>
+// Client-side validation
+document.getElementById('blogForm').addEventListener('submit', function(e) {
+  const form = e.target;
+  const title = document.getElementById('title');
+  const body = document.getElementById('body');
+  
+  if (!title.value.trim() || !body.value.trim()) {
+    e.preventDefault();
+    
+    if (!title.value.trim()) {
+      title.classList.add('is-invalid');
+    } else {
+      title.classList.remove('is-invalid');
+    }
+    
+    if (!body.value.trim()) {
+      body.classList.add('is-invalid');
+    } else {
+      body.classList.remove('is-invalid');
+    }
+    
+    // Scroll to first invalid field
+    const firstInvalid = form.querySelector('.is-invalid');
+    if (firstInvalid) {
+      firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+});
+
+// Image preview functionality
+document.getElementById('image').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  const previewContainer = document.getElementById('imagePreviewContainer');
+  
+  if (!previewContainer) {
+    const container = document.createElement('div');
+    container.id = 'imagePreviewContainer';
+    container.className = 'mt-3';
+    e.target.parentNode.appendChild(container);
+  }
+  
+  const container = document.getElementById('imagePreviewContainer');
+  container.innerHTML = '';
+  
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const img = document.createElement('img');
+      img.src = event.target.result;
+      img.className = 'img-thumbnail';
+      img.style.maxHeight = '300px';
+      container.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  }
+});
+</script>
